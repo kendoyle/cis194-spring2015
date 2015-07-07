@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wall #-}
 module HW02 where
 
+import Control.Applicative ((<*>))
+
 -- Mastermind -----------------------------------------
 
 -- A peg can be one of six colors
@@ -23,43 +25,55 @@ colors = [Red, Green, Blue, Yellow, Orange, Purple]
 
 -- Get the number of exact matches between the actual code and the guess
 exactMatches :: Code -> Code -> Int
-exactMatches = undefined
+exactMatches n = length . filter id . zipWith (==) n
 
 -- Exercise 2 -----------------------------------------
 
--- For each peg in xs, count how many times is occurs in ys
+-- For each peg in xs, count how many times it occurs in ys
 countColors :: Code -> [Int]
-countColors = undefined
+countColors c = map (exactMatches c . replicate 6) colors
 
 -- Count number of matches between the actual code and the guess
 matches :: Code -> Code -> Int
-matches = undefined
+matches c g = sum $ zipWith min (countColors c) (countColors g)
 
 -- Exercise 3 -----------------------------------------
 
 -- Construct a Move from a guess given the actual code
 getMove :: Code -> Code -> Move
-getMove = undefined
+getMove c g = Move g x y
+  where x = exactMatches c g
+        y = matches c g - x
 
 -- Exercise 4 -----------------------------------------
 
 isConsistent :: Move -> Code -> Bool
-isConsistent = undefined
+isConsistent m@(Move g _ _) c = getMove c g == m
 
 -- Exercise 5 -----------------------------------------
 
 filterCodes :: Move -> [Code] -> [Code]
-filterCodes = undefined
+filterCodes m = filter (isConsistent m)
 
 -- Exercise 6 -----------------------------------------
 
+extendCode :: [Code] -> [Code]
+extendCode cs = map (:) colors <*> cs
+
 allCodes :: Int -> [Code]
-allCodes = undefined
+allCodes n = (!!n) $ iterate extendCode [[]]
 
 -- Exercise 7 -----------------------------------------
 
+applyFirstGuess :: Code -> ([Move], [Code]) -> ([Move], [Code])
+applyFirstGuess c (ms, g:gs) = (m:ms, filterCodes m gs)
+  where m = getMove c g
+
 solve :: Code -> [Move]
-solve = undefined
+solve c = reverse . fst . head $
+          dropWhile ((>0) . length . snd) $
+          iterate (applyFirstGuess c) ([], start)
+        where start = allCodes (length c)
 
 -- Bonus ----------------------------------------------
 
