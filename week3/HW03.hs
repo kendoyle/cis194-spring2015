@@ -34,15 +34,31 @@ type State = String -> Int
 -- Exercise 1 -----------------------------------------
 
 extend :: State -> String -> Int -> State
-extend = undefined
+extend st k v s
+  | k == s = v
+  | otherwise = st s
 
 empty :: State
-empty = undefined
+empty = const 0
 
 -- Exercise 2 -----------------------------------------
 
+boolToInt :: Bool -> Int
+boolToInt True = 1
+boolToInt False = 0
+
 evalE :: State -> Expression -> Int
-evalE = undefined
+evalE st (Var s) = st s
+evalE _ (Val i) = i
+evalE st (Op e1 Plus e2) = evalE st e1 + evalE st e2
+evalE st (Op e1 Minus e2) = evalE st e1 - evalE st e2
+evalE st (Op e1 Times e2) = evalE st e1 * evalE st e2
+evalE st (Op e1 Divide e2) = evalE st e1 `div` evalE st e2
+evalE st (Op e1 Gt e2) = boolToInt (evalE st e1 > evalE st e2)
+evalE st (Op e1 Ge e2) = boolToInt (evalE st e1 >= evalE st e2)
+evalE st (Op e1 Lt e2) = boolToInt (evalE st e1 < evalE st e2)
+evalE st (Op e1 Le e2) = boolToInt (evalE st e1 <= evalE st e2)
+evalE st (Op e1 Eql e2) = boolToInt (evalE st e1 == evalE st e2)
 
 -- Exercise 3 -----------------------------------------
 
@@ -54,16 +70,34 @@ data DietStatement = DAssign String Expression
                      deriving (Show, Eq)
 
 desugar :: Statement -> DietStatement
-desugar = undefined
-
+desugar (Assign s e) = DAssign s e
+desugar (Incr s) = DAssign s (Op (Var s) Plus (Val 1))
+desugar (If e s1 s2) = DIf e (desugar s1) (desugar s2)
+desugar (While e s) = DWhile e (desugar s)
+desugar (For i cond inc body) = DSequence (desugar i)
+                                 (DWhile cond (DSequence (desugar body) (desugar inc)))
+desugar (Sequence s1 s2) = DSequence (desugar s1) (desugar s2)
+desugar Skip = DSkip
 
 -- Exercise 4 -----------------------------------------
 
+intToBool :: Int -> Bool
+intToBool 0 = False
+intToBool _ = True
+
 evalSimple :: State -> DietStatement -> State
-evalSimple = undefined
+evalSimple st (DAssign s e) = extend st s (evalE st e)
+evalSimple st (DIf e s1 s2) = if intToBool $ evalE st e
+                              then evalSimple st s1
+                              else evalSimple st s2
+evalSimple st (DWhile e s) = if intToBool $ evalE st e
+                             then evalSimple st s `evalSimple` DWhile e s
+                             else st
+evalSimple st (DSequence s1 s2) = evalSimple st s1 `evalSimple` s2
+evalSimple st DSkip = st
 
 run :: State -> Statement -> State
-run = undefined
+run st = evalSimple st . desugar
 
 -- Programs -------------------------------------------
 
