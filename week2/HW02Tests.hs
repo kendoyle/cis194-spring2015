@@ -51,22 +51,60 @@ ex4Tests = [ testF2 "isConsistent test" isConsistent
 -- Exercise 5 -----------------------------------------
 
 ex5Tests :: [Test]
-ex5Tests = []
+ex5Tests = [ testF2 "filterCodes test" filterCodes
+             [ (Move [Red, Red, Blue, Green] 1 1, [[Red, Blue, Yellow, Purple]],
+               [[Red, Blue, Yellow, Purple]])
+             , (Move [Red, Red, Blue, Green] 1 1, [[Red, Blue, Red, Purple]],
+               [])
+             ]
+           ]
 
 -- Exercise 6 -----------------------------------------
 
 ex6Tests :: [Test]
-ex6Tests = []
+ex6Tests = [ testF1 "allCodes test" allCodes
+             [ (1, [[Red], [Green], [Blue], [Yellow], [Orange], [Purple]]),
+               (2, [[Red, Red], [Red, Green], [Red, Blue],
+                    [Red, Yellow], [Red, Orange], [Red, Purple],
+                    [Green, Red], [Green, Green], [Green, Blue],
+                    [Green, Yellow], [Green, Orange], [Green, Purple],
+                    [Blue, Red], [Blue, Green], [Blue, Blue],
+                    [Blue, Yellow], [Blue, Orange], [Blue, Purple],
+                    [Yellow, Red], [Yellow, Green], [Yellow, Blue],
+                    [Yellow, Yellow], [Yellow, Orange], [Yellow, Purple],
+                    [Orange, Red], [Orange, Green], [Orange, Blue],
+                    [Orange, Yellow], [Orange, Orange], [Orange, Purple],
+                    [Purple, Red], [Purple, Green], [Purple, Blue],
+                    [Purple, Yellow], [Purple, Orange], [Purple, Purple]])
+             ]
+           ]
 
 -- Exercise 7 -----------------------------------------
 
 ex7Tests :: [Test]
-ex7Tests = []
+ex7Tests = [ testF1 "solve test" solve
+             [ ([Red, Red, Green, Blue],
+                [Move [Red,Red,Red,Red] 2 0,
+                 Move [Red,Red,Green,Green] 3 0,
+                 Move [Red,Red,Green,Blue] 4 0])
+             ]
+           ]
 
 -- Bonus ----------------------------------------------
 
+-- This example is from Knuth's paper "The Computer as Master Mind"
+-- http://www.cs.uni.edu/~wallingf/teaching/cs3530/resources/knuth-mastermind.pdf
+
 bonusTests :: [Test]
-bonusTests = []
+bonusTests = [ testF1 "fiveGuess test" fiveGuess
+               [ ([Blue, Purple, Blue, Green],
+                  [Move [Red,Red,Green,Green] 1 0,
+                   Move [Red,Blue,Yellow,Yellow] 0 1,
+                   Move [Blue,Orange,Green,Purple] 1 2,
+                   Move [Red,Yellow,Purple,Green] 1 1,
+                   Move [Blue,Purple,Blue,Green] 4 0])
+               ]
+             ]
 
 -- All Tests ------------------------------------------
 

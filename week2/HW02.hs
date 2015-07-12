@@ -2,6 +2,8 @@
 module HW02 where
 
 import Control.Applicative ((<*>))
+import Data.List
+import Data.Function
 
 -- Mastermind -----------------------------------------
 
@@ -77,5 +79,48 @@ solve c = reverse . fst . head $
 
 -- Bonus ----------------------------------------------
 
+-- c is the secret code
+-- u is the set of unused guesses
+-- s is the set of still-viable guesses
+-- g is the guess
+
+-- what possible moves could result from a guess?
+-- note: n-1 colors and 1 white is not possible
+possibleMoves :: Code -> [Move]
+possibleMoves g = [Move g x y | x <- [0..n], y <- [0..n], x + y <= n, (x,y) /= (n-1,1)]
+  where n = length g
+
+-- the score for a move is the number of possibilities it would eliminate
+scoreForMove :: [Code] -> Move -> Int
+scoreForMove s m = length s - length (filterCodes m s)
+
+-- the score for a guess is the minimum number of possibilities its move would
+-- eliminate
+score :: [Code] -> Code -> Int
+score s g = minimum $ map (scoreForMove s) (possibleMoves g)
+
+-- the next guess is a guess that has the maximum score, preferentially taking
+-- the guess from the remaining set s
+nextGuess :: [Code] -> [Code] -> Code
+nextGuess u s = g
+  where scored = zip u (map (score s) u)
+        highest = map fst $ last $
+                  groupBy ((==) `on` snd) $ sortBy (compare `on` snd) scored
+        s' = s `intersect` highest
+        g = if null s' then head highest else head s'
+
+-- knuth's algorithm for mastermind
+knuth :: Code -> [Code] -> [Code] -> Code -> [Move]
+knuth c u s g = let m@(Move _ color _) = getMove c g
+                    s' = filterCodes m s
+                    u' = delete g u
+                    g' = nextGuess u' s'
+                in if color == length c
+                   then [m]
+                   else m : knuth c u' s' g'
+
+-- we start with the guess [Red, Red, Green, Green] (Knuth)
 fiveGuess :: Code -> [Move]
-fiveGuess = undefined
+fiveGuess c = knuth c a a g
+  where a = allCodes (length c)
+        g = [Red, Red, Green, Green]
