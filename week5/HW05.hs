@@ -11,6 +11,8 @@ import qualified Data.Map.Strict as Map
 import Data.Bits (xor)
 import Control.Applicative ((<*>))
 import Data.Maybe (fromMaybe)
+import Data.Ord (comparing)
+import Data.List (sortBy)
 
 import Parser
 
@@ -73,13 +75,32 @@ getCriminal m = fst $ Map.foldrWithKey f ("", 0) m
 
 -- Exercise 7 -----------------------------------------
 
+getPayers :: Map String Integer -> Map String Integer
+getPayers = Map.filter (>0)
+
+getPayees :: Map String Integer -> Map String Integer
+getPayees = Map.filter (<0)
+
+makeUndoTransactions :: [(String, Integer)] -> [(String, Integer)] -> [TId] ->
+                        [Transaction] -> [Transaction]
+makeUndoTransactions p@(pFrom:payers) q@(pTo:payees) (t:tids) ts =
+  makeUndoTransactions payers' payees' tids
+    (Transaction { from=fst pFrom, to=fst pTo, amount=amt, tid=t } : ts)
+  where amt = if snd pFrom > snd pTo then snd pTo else snd pFrom
+        payers' = if amt == snd pFrom then payers else p
+        payees' = if amt == snd pTo then payees else q
+makeUndoTransactions _ _ _ ts = ts
+
 undoTs :: Map String Integer -> [TId] -> [Transaction]
-undoTs = undefined
+undoTs m tids = makeUndoTransactions payers payees tids []
+  where descSort = sortBy (flip $ comparing snd)
+        payers = descSort $ Map.toList (getPayers m)
+        payees = descSort $ map (\(x,y) -> (x, -y)) $ Map.toList (getPayees m)
 
 -- Exercise 8 -----------------------------------------
 
 writeJSON :: ToJSON a => FilePath -> a -> IO ()
-writeJSON = undefined
+writeJSON jsonFile s = BS.writeFile jsonFile (encode s)
 
 -- Exercise 9 -----------------------------------------
 
