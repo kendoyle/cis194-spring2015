@@ -5,34 +5,39 @@ module HW01 where
 
 -- Get the last digit from a number
 lastDigit :: Integer -> Integer
-lastDigit = (`mod` 10)
+lastDigit x = mod x 10
 
 -- Drop the last digit from a number
 dropLastDigit :: Integer -> Integer
-dropLastDigit = (`div` 10)
+dropLastDigit x = quot x 10
 
 -- Exercise 2 -----------------------------------------
 
 toRevDigits :: Integer -> [Integer]
-toRevDigits = map lastDigit . takeWhile (>0) . iterate dropLastDigit
+toRevDigits 0 = []
+toRevDigits x = [lastDigit x] ++ toRevDigits (dropLastDigit x)
 
 -- Exercise 3 -----------------------------------------
 
 -- Double every second number in a list starting on the left.
 doubleEveryOther :: [Integer] -> [Integer]
-doubleEveryOther = zipWith ($) (cycle [id, (*2)])
+doubleEveryOther [] = []
+doubleEveryOther (x1:[]) = [x1]
+doubleEveryOther (x1:x2:xs) = [x1] ++ [2*x2] ++ doubleEveryOther xs
 
 -- Exercise 4 -----------------------------------------
 
 -- Calculate the sum of all the digits in every Integer.
 sumDigits :: [Integer] -> Integer
-sumDigits = sum . concatMap toRevDigits
+sumDigits [] = 0
+sumDigits (x:xs) = dropLastDigit x + lastDigit x + sumDigits xs
+
 
 -- Exercise 5 -----------------------------------------
 
 -- Validate a credit card number using the above functions.
 luhn :: Integer -> Bool
-luhn = (==0) . lastDigit . sumDigits . doubleEveryOther . toRevDigits
+luhn n = 0 == mod (sumDigits (doubleEveryOther (toRevDigits n))) 10
 
 -- Exercise 6 -----------------------------------------
 
@@ -41,25 +46,14 @@ type Peg = String
 type Move = (Peg, Peg)
 
 hanoi :: Integer -> Peg -> Peg -> Peg -> [Move]
-hanoi n a b c
-  | n == 0 = []
-  | otherwise = hanoi (n-1) a c b
-                ++ [(a,b)]
-                ++ hanoi (n-1) c b a
+hanoi 1 start goal _    = [(start, goal)]
+hanoi n start goal temp = hanoi (n-1) start temp goal ++ 
+                          hanoi 1 start goal temp ++ 
+						  hanoi (n-1) temp goal start
 
--- Exercise 7 -----------------------------------------
-
--- Towers of Hanoi for four pegs
-
--- 1: move n-k to d (the extra)
--- 2: move the remaining k to b, using normal hanoi
--- 3: move n-k back from d to b
--- k is chosen such that n is the kth triangle number
-
-hanoi4 :: Integer -> Peg -> Peg -> Peg -> Peg -> [Move]
-hanoi4 n a b c d
- | n == 0 = []
- | otherwise  = hanoi4 (n-k) a d b c
-                ++ hanoi k a b c
-                ++ hanoi4 (n-k) d b a c
-  where k = head [x | x <- [1..], x * (x + 1) `div` 2 >= n]
+hanoiQ :: Integer -> Peg -> Peg -> Peg -> Peg -> [Move]
+hanoiQ 1 s g _  _  = [(s, g)]
+hanoiQ 2 s g t1 _  = [(s, t1), (s, g), (t1, g)]
+hanoiQ n s g t1 t2 = hanoiQ (n-2) s t2 g t1 ++
+                     hanoiQ 2 s g t1 t2 ++
+					 hanoiQ (n-2) t2 g t1 s
