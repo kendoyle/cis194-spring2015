@@ -6,17 +6,23 @@ newtype Poly a = P [a]
 -- Exercise 1 -----------------------------------------
 
 x :: Num a => Poly a
-x = undefined
+x = P [0, 1]
 
 -- Exercise 2 ----------------------------------------
 
+remove0s :: (Num a, Eq a) => [a] -> [a]
+remove0s (y:ys) 
+ | y /= 0 = (y:ys)
+ | otherwise = remove0s ys
+remove0s [] = []
+
 instance (Num a, Eq a) => Eq (Poly a) where
-    (==) = undefined
+    P a == P b = remove0s a == remove0s b
  
 -- Exercise 3 -----------------------------------------
 
 instance (Num a, Eq a, Show a) => Show (Poly a) where
-    show = undefined
+    showsPrec a = showString "x" 
 
 -- Exercise 4 -----------------------------------------
 
