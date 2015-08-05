@@ -34,15 +34,32 @@ type State = String -> Int
 -- Exercise 1 -----------------------------------------
 
 extend :: State -> String -> Int -> State
-extend = undefined
+extend st key value s
+    | key == s = value
+    | otherwise = st s 
 
 empty :: State
-empty = undefined
+empty _ = 0
 
 -- Exercise 2 -----------------------------------------
 
 evalE :: State -> Expression -> Int
-evalE = undefined
+evalE st (Var s) = st s
+evalE st (Val i) = i
+evalE st (Op e1 bop e2) = 
+    let x = evalE st e1
+        y = evalE st e2
+        convert = (\f -> if f then 1 else 0)
+    in case bop of
+        Plus -> x + y
+        Minus -> x - y
+        Times -> x * y
+        Divide -> x `quot` y
+        Gt -> convert $ x > y
+        Ge -> convert $ x >= y
+        Lt -> convert $ x < y
+        Le -> convert $ x <= y
+        Eql -> convert $ x == y
 
 -- Exercise 3 -----------------------------------------
 
@@ -54,16 +71,29 @@ data DietStatement = DAssign String Expression
                      deriving (Show, Eq)
 
 desugar :: Statement -> DietStatement
-desugar = undefined
-
+desugar (Assign s e) = DAssign s e
+desugar (Incr s) = DAssign s (Op (Val 1) Plus (Var s))
+desugar (If e s1 s2) = DIf e (desugar s1) (desugar s2)
+desugar (While e s) = DWhile e (desugar s)
+desugar (For s1 e s2 s3) = 
+    DSequence (desugar s1) (DWhile e (DSequence (desugar s3) (desugar s2))) 
+desugar (Sequence s1 s2) = DSequence (desugar s1) (desugar s2)
+desugar Skip = DSkip
 
 -- Exercise 4 -----------------------------------------
 
 evalSimple :: State -> DietStatement -> State
-evalSimple = undefined
+evalSimple st (DAssign s e) = extend st s (evalE st e)
+evalSimple st (DIf e ds1 ds2) = 
+    if (evalE st e) /= 0 then (evalSimple st ds1) else (evalSimple st ds2)
+evalSimple st (DWhile e ds) = 
+    if (evalE st e) /= 0 then evalSimple (evalSimple st ds) (DWhile e ds) else st
+evalSimple st (DSequence ds1 ds2) =
+    evalSimple (evalSimple st ds1) ds2
+evalSimple st DSkip = st
 
 run :: State -> Statement -> State
-run = undefined
+run st stmt = evalSimple st (desugar stmt)
 
 -- Programs -------------------------------------------
 
@@ -81,7 +111,9 @@ factorial :: Statement
 factorial = For (Assign "Out" (Val 1))
                 (Op (Var "In") Gt (Val 0))
                 (Assign "In" (Op (Var "In") Minus (Val 1)))
-                (Assign "Out" (Op (Var "In") Times (Var "Out")))
+                (Sequence
+                    (Assign "T" (Var "Out"))
+                    (Assign "Out" (Op (Var "In") Times (Var "Out"))))
 
 
 {- Calculate the floor of the square root of the input
