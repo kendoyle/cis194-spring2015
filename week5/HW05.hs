@@ -14,6 +14,8 @@ import Data.Function
 
 import Parser
 
+-- ghcViz
+
 -- Exercise 1 -----------------------------------------
 
 getSecret :: FilePath -> FilePath -> IO ByteString
@@ -36,6 +38,7 @@ decryptWithKey key path = do
 
 parseFile :: FromJSON a => FilePath -> IO (Maybe a)
 parseFile path = do
+--fmap "every monad is also a functor"
     jsonBytes <- BS.readFile path
     let decoded = decode jsonBytes
     return decoded
@@ -50,6 +53,9 @@ getTransactions :: Maybe[Transaction] -> [Transaction]
 getTransactions Nothing = []
 getTransactions (Just ts) = ts
 
+-- fromMaybe
+-- fmap <*> | :t <*>
+
 getBadTs :: FilePath -> FilePath -> IO (Maybe [Transaction])
 getBadTs victimFile transactionFile = do
     victims <- parseFile victimFile :: IO (Maybe[TId])
@@ -60,6 +66,7 @@ getBadTs victimFile transactionFile = do
 
 -- Exercise 5 -----------------------------------------
 
+-- fromMaybe vs. FindWithDefault vs. Map.insertWith
 getFlow :: [Transaction] -> Map String Integer
 getFlow ts = 
     let flowMap = Map.empty
@@ -73,6 +80,8 @@ getFlow ts =
 -- Exercise 6 -----------------------------------------
 
 getCriminal :: Map String Integer -> String
+-- comparing vs. compare
+-- max / min -> fold
 getCriminal m = head . Map.keys $ Map.filter (== (last $ Map.elems m)) m
 
 -- Exercise 7 -----------------------------------------

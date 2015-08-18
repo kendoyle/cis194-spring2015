@@ -22,7 +22,7 @@ instance (Num a, Eq a) => Eq (Poly a) where
 -- Exercise 3 -----------------------------------------
 
 instance (Num a, Eq a, Show a) => Show (Poly a) where
-    showsPrec a = showString "x" 
+   show (P a) = show a 
 
 -- Exercise 4 -----------------------------------------
 
