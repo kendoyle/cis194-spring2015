@@ -18,43 +18,56 @@ import qualified Data.Vector as V
 -- Exercise 1 -----------------------------------------
 
 liftM :: Monad m => (a -> b) -> m a -> m b
-liftM = undefined
+liftM f ma = do
+    a <- ma
+    return $ f a
 
 swapV :: Int -> Int -> Vector a -> Maybe (Vector a)
-swapV = undefined
-
+swapV i0 i1 as = 
+    let swapV' v0 v1 = as//[(i0, v1),(i1,v0)]
+    in liftM2 swapV' (as !? i0) (as !? i1)
+    
 -- Exercise 2 -----------------------------------------
 
 mapM :: Monad m => (a -> m b) -> [a] -> m [b]
-mapM = undefined
+mapM f as = sequence $ map f as
 
 getElts :: [Int] -> Vector a -> Maybe [a]
-getElts = undefined
+getElts is vec = mapM (vec !?) is
 
 -- Exercise 3 -----------------------------------------
 
 type Rnd a = Rand StdGen a
 
-randomElt :: Vector a -> Rnd (Maybe a)
-randomElt = undefined
+randomElt :: Vector a -> Rnd (Maybe a) --IO (Maybe a)
+randomElt vec = do
+    i <- getRandomR (0, (V.length vec) - 1)
+    return $ vec !? i
 
 -- Exercise 4 -----------------------------------------
 
 randomVec :: Random a => Int -> Rnd (Vector a)
-randomVec = undefined
+randomVec n = V.replicateM n getRandom
 
 randomVecR :: Random a => Int -> (a, a) -> Rnd (Vector a)
-randomVecR = undefined
+randomVecR n = V.replicateM n . getRandomR
 
 -- Exercise 5 -----------------------------------------
 
-shuffle :: Vector a -> Rnd (Vector a)
-shuffle = undefined
+shuffle :: Vector a -> Rnd (Vector a) -- IO (Vector a)
+shuffle vec = 
+    let shuffle' 0 vec' = do return $ vec'
+        shuffle' i vec' = do
+            j <- getRandomR (0, i)
+            v <- shuffle' (i - 1) (vec'//[(i, vec' ! j), (j, vec' ! i)])
+            return v
+    in shuffle' ((V.length vec) - 1) vec
 
 -- Exercise 6 -----------------------------------------
 
 partitionAt :: Ord a => Vector a -> Int -> (Vector a, a, Vector a)
-partitionAt = undefined
+partitionAt vec i = ((V.filter (< pvt) vec), pvt, V.filter (pvt <=) vec)
+    where pvt = vec ! i
 
 -- Exercise 7 -----------------------------------------
 
