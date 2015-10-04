@@ -1,4 +1,4 @@
-{-# LANGUAGE MonadComprehensions, RecordWildCards #-}
+{-# LANGUAGE MonadComprehensions, RecordWildCards, TypeSynonymInstances, FlexibleInstances  #-}
 {-# OPTIONS_GHC -Wall #-}
 module HW07 where
 
@@ -69,6 +69,12 @@ partitionAt :: Ord a => Vector a -> Int -> (Vector a, a, Vector a)
 partitionAt vec i = ((V.filter (< pvt) vec), pvt, V.filter (pvt <=) vec)
     where pvt = vec ! i
 
+partitionAt' :: Ord a => Vector a -> Int -> (Vector a, a, Vector a)
+partitionAt' vec i = 
+    let pvt = vec ! i
+        gte_pt = (\i' x -> i' /= i && x >= pvt)
+    in ((V.filter (< pvt) vec), pvt, (V.ifilter gte_pt vec))
+
 -- Exercise 7 -----------------------------------------
 
 -- Quicksort
@@ -78,36 +84,90 @@ quicksort (x:xs) = quicksort [ y | y <- xs, y < x ]
                    <> (x : quicksort [ y | y <- xs, y >= x ])
 
 qsort :: Ord a => Vector a -> Vector a
-qsort = undefined
+qsort vec = 
+    if V.null vec 
+    then vec
+    else
+        let x = V.head vec
+            tl = V.tail vec
+        in qsort [ y | y <- tl, y < x ]
+            <> cons x (qsort [ y | y <- tl, y >= x ])
 
 -- Exercise 8 -----------------------------------------
 
+--qsortR :: Ord a => Vector a -> Vector a
 qsortR :: Ord a => Vector a -> Rnd (Vector a)
-qsortR = undefined
+qsortR vec = 
+    if V.null vec 
+    then do return vec
+    else do
+        i <- getRandomR (0, (V.length vec) - 1)
+        let (los, pvt, his) = (partitionAt' vec i)
+        his' <- qsortR his
+        los' <- qsortR los
+        return $ los' <> cons pvt his'
 
 -- Exercise 9 -----------------------------------------
 
 -- Selection
 select :: Ord a => Int -> Vector a -> Rnd (Maybe a)
-select = undefined
+select rank vec 
+    | V.null vec = do return Nothing
+    | rank >= V.length vec = do return Nothing 
+    | otherwise  = do 
+        i <- getRandomR (0, (V.length vec) - 1)
+        let (los, pvt, his) = (partitionAt' vec i)
+        let lo_len = V.length los
+        case compare rank lo_len of
+            EQ -> return $ Just pvt
+            LT -> do 
+                t <- select rank los
+                return $ t
+            GT -> do
+                t <- select (rank - lo_len - 1) his
+                return $ t
 
 -- Exercise 10 ----------------------------------------
 
 allCards :: Deck
-allCards = undefined
+allCards = [Card l s | s <- suits, l <- labels]
+
+--type RDeck = Rnd Deck
+--instance Show RDeck where
+    --show rd = do
+        --d <- rd
+        --return (V.foldl' (++) "" (V.map (\ (Card l s) -> show s ++ show l ++ ", ") d))
+
+--deckToString :: Deck -> String
+--deckToString = V.foldl' (++) "" . V.map (\ (Card l s) -> show s ++ show l ++ ", ")
+
+--instance Show (Rnd (Vector Card)) where
+    --show rd = do
+        --d <- rd
+        --return $ deckToString d
+
+-- or evalRandIO is a thing...
 
 newDeck :: Rnd Deck
-newDeck =  undefined
+newDeck = shuffle allCards
 
 -- Exercise 11 ----------------------------------------
 
 nextCard :: Deck -> Maybe (Card, Deck)
-nextCard = undefined
+nextCard deck 
+    | V.null deck = Nothing
+    | otherwise = Just (V.head deck, V.tail deck)
 
 -- Exercise 12 ----------------------------------------
 
 getCards :: Int -> Deck -> Maybe ([Card], Deck)
-getCards = undefined
+getCards n deck
+    | n == 0 = Just ([], deck)
+    | V.null deck = Nothing
+    | otherwise = do
+        (n_card, deck') <- nextCard deck 
+        (r_cards, deck'') <- getCards (n-1) deck'
+        return $ ((n_card:r_cards), deck'')
 
 -- Exercise 13 ----------------------------------------
 
